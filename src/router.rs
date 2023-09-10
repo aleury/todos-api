@@ -6,7 +6,7 @@ use tower_http::{
     trace::TraceLayer,
 };
 
-use crate::error::Error;
+use crate::{error::Error, todo::SqliteTodoStore};
 
 pub async fn ping(Extension(dbpool): Extension<SqlitePool>) -> Result<String, Error> {
     let mut conn = dbpool.acquire().await?;
@@ -28,12 +28,12 @@ fn todos_v1() -> Router {
         )
 }
 
-pub fn create(dbpool: sqlx::SqlitePool) -> Router {
+pub fn create(store: SqliteTodoStore) -> Router {
     Router::new()
         .route("/alive", get(|| async { "ok" }))
         .route("/ready", get(ping))
         .nest("/v1", todos_v1())
-        .layer(Extension(dbpool))
+        .layer(Extension(store))
         .layer(CorsLayer::new().allow_methods(Any).allow_origin(Any))
         .layer(TraceLayer::new_for_http())
 }

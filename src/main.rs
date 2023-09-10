@@ -1,3 +1,5 @@
+use crate::todo::SqliteTodoStore;
+
 mod api;
 mod error;
 mod router;
@@ -51,8 +53,10 @@ async fn main() {
         .expect("failed to parse addr");
     tracing::info!("listening on {addr}");
 
+    let store = SqliteTodoStore::new(dbpool);
+
     axum::Server::bind(&addr)
-        .serve(router::create(dbpool).into_make_service())
+        .serve(router::create(store).into_make_service())
         .await
         .expect("unable to start server");
 }
