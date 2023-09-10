@@ -1,15 +1,15 @@
-use std::sync::Arc;
+mod api;
+mod error;
+mod graphql;
+mod pinger;
+mod router;
+mod todo;
 
 use crate::{
     pinger::{DynPinger, SqlitePinger},
     todo::{DynTodoStore, SqliteTodoStore},
 };
-
-mod api;
-mod error;
-mod pinger;
-mod router;
-mod todo;
+use std::sync::Arc;
 
 fn init_tracing() {
     use tracing_subscriber::{filter::LevelFilter, prelude::*, EnvFilter};

@@ -1,3 +1,4 @@
+use async_graphql_axum::GraphQL;
 use axum::{routing::get, Extension, Router};
 
 use tower_http::{
@@ -5,7 +6,7 @@ use tower_http::{
     trace::TraceLayer,
 };
 
-use crate::{error::Error, pinger::DynPinger, todo::DynTodoStore};
+use crate::{error::Error, graphql, pinger::DynPinger, todo::DynTodoStore};
 
 pub async fn ping(Extension(pinger): Extension<DynPinger>) -> Result<String, Error> {
     pinger.ping().await.map(|_| "ok".to_string())
@@ -23,7 +24,11 @@ fn todos_v1() -> Router {
 }
 
 pub fn create(pinger: DynPinger, store: DynTodoStore) -> Router {
+    let schema = graphql::schema::build().data(store.clone()).finish();
+    let graphql_handler = get(graphql::graphiql).post_service(GraphQL::new(schema));
+
     Router::new()
+        .route("/", graphql_handler)
         .route("/alive", get(|| async { "ok" }))
         .route("/ready", get(ping))
         .nest("/v1", todos_v1())

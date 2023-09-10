@@ -9,11 +9,11 @@ use crate::error::Error;
 
 #[derive(Serialize, Clone, sqlx::FromRow)]
 pub struct Todo {
-    id: i64,
-    body: String,
-    completed: bool,
-    created_at: NaiveDateTime,
-    updated_at: NaiveDateTime,
+    pub id: i64,
+    pub body: String,
+    pub completed: bool,
+    pub created_at: NaiveDateTime,
+    pub updated_at: NaiveDateTime,
 }
 
 pub type DynTodoStore = Arc<dyn TodoStore + Send + Sync>;

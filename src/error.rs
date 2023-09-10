@@ -15,6 +15,15 @@ impl From<sqlx::Error> for Error {
     }
 }
 
+impl From<Error> for async_graphql::Error {
+    fn from(err: Error) -> Self {
+        match err {
+            Error::Sqlx(_, msg) => async_graphql::Error::new(msg),
+            Error::NotFound => async_graphql::Error::new("Not found"),
+        }
+    }
+}
+
 impl IntoResponse for Error {
     fn into_response(self) -> axum::response::Response {
         match self {
