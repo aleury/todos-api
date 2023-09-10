@@ -40,7 +40,7 @@ impl Todo {
     pub async fn update(dbpool: SqlitePool, id: i64, update: UpdateTodo) -> Result<Todo, Error> {
         sqlx::query_as(
             "update todos \
-            set body = ?, completed = ?, updated_at = datetime('now') \
+            set body = coalesce(?, body), completed = coalesce(?, completed), updated_at = datetime('now') \
             where id = ? returning *",
         )
         .bind(update.body())
@@ -73,16 +73,16 @@ impl CreateTodo {
 
 #[derive(Deserialize)]
 pub struct UpdateTodo {
-    body: String,
-    completed: bool,
+    body: Option<String>,
+    completed: Option<bool>,
 }
 
 impl UpdateTodo {
-    pub fn body(&self) -> &str {
-        self.body.as_ref()
+    pub fn body(&self) -> Option<&str> {
+        self.body.as_deref()
     }
 
-    pub fn completed(&self) -> bool {
+    pub fn completed(&self) -> Option<bool> {
         self.completed
     }
 }
