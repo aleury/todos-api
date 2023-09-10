@@ -12,6 +12,12 @@ pub struct Todo {
     updated_at: NaiveDateTime,
 }
 
+impl From<todo::Todo> for Todo {
+    fn from(todo: todo::Todo) -> Self {
+        Todo::from(&todo)
+    }
+}
+
 impl From<&todo::Todo> for Todo {
     fn from(todo: &todo::Todo) -> Self {
         Todo {
@@ -35,6 +41,16 @@ impl TodoQuery {
             .list()
             .await
             .map(|todos| todos.iter().map(Into::into).collect())
+            .map_err(Into::into)
+    }
+
+    pub async fn todo<'a>(&self, ctx: &Context<'a>, todo_id: ID) -> Result<Todo> {
+        let todo_store = ctx.data_unchecked::<DynTodoStore>();
+        let todo_id: i64 = todo_id.parse()?;
+        todo_store
+            .get(todo_id)
+            .await
+            .map(Into::into)
             .map_err(Into::into)
     }
 }
