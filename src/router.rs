@@ -1,20 +1,14 @@
 use axum::{routing::get, Extension, Router};
 
-use sqlx::{Connection, SqlitePool};
 use tower_http::{
     cors::{Any, CorsLayer},
     trace::TraceLayer,
 };
 
-use crate::{error::Error, todo::SqliteTodoStore};
+use crate::{error::Error, pinger::DynPinger, todo::DynTodoStore};
 
-pub async fn ping(Extension(dbpool): Extension<SqlitePool>) -> Result<String, Error> {
-    let mut conn = dbpool.acquire().await?;
-
-    conn.ping()
-        .await
-        .map(|_| "ok".to_string())
-        .map_err(Into::into)
+pub async fn ping(Extension(pinger): Extension<DynPinger>) -> Result<String, Error> {
+    pinger.ping().await.map(|_| "ok".to_string())
 }
 
 fn todos_v1() -> Router {
@@ -28,11 +22,12 @@ fn todos_v1() -> Router {
         )
 }
 
-pub fn create(store: SqliteTodoStore) -> Router {
+pub fn create(pinger: DynPinger, store: DynTodoStore) -> Router {
     Router::new()
         .route("/alive", get(|| async { "ok" }))
         .route("/ready", get(ping))
         .nest("/v1", todos_v1())
+        .layer(Extension(pinger))
         .layer(Extension(store))
         .layer(CorsLayer::new().allow_methods(Any).allow_origin(Any))
         .layer(TraceLayer::new_for_http())

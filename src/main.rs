@@ -1,7 +1,13 @@
-use crate::todo::SqliteTodoStore;
+use std::sync::Arc;
+
+use crate::{
+    pinger::{DynPinger, SqlitePinger},
+    todo::{DynTodoStore, SqliteTodoStore},
+};
 
 mod api;
 mod error;
+mod pinger;
 mod router;
 mod todo;
 
@@ -53,10 +59,11 @@ async fn main() {
         .expect("failed to parse addr");
     tracing::info!("listening on {addr}");
 
-    let store = SqliteTodoStore::new(dbpool);
+    let pinger = Arc::new(SqlitePinger::new(dbpool.clone())) as DynPinger;
+    let store = Arc::new(SqliteTodoStore::new(dbpool)) as DynTodoStore;
 
     axum::Server::bind(&addr)
-        .serve(router::create(store).into_make_service())
+        .serve(router::create(pinger, store).into_make_service())
         .await
         .expect("unable to start server");
 }
