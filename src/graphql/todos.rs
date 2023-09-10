@@ -34,7 +34,7 @@ impl TodoQuery {
         todo_store
             .list()
             .await
-            .map(|todos| todos.iter().map(Todo::from).collect())
+            .map(|todos| todos.iter().map(Into::into).collect())
             .map_err(Into::into)
     }
 }
